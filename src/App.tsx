@@ -1,0 +1,78 @@
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import LandingPage from "./pages/LandingPage";
+import Dashboard from "./pages/Dashboard";
+import AddMoviePage from "./pages/AddMoviePage";
+import AdminPanel from "./pages/AdminPanel";
+import Sidebar from "./components/Sidebar";
+import { User } from "./types";
+import { AnimatePresence, motion } from "motion/react";
+
+export default function App() {
+  const [user, setUser] = useState<User | null>(null);
+  const [activeTab, setActiveTab] = useState("dashboard");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const savedUser = localStorage.getItem("cinetrack_user");
+    if (savedUser) {
+      setUser(JSON.parse(savedUser));
+    }
+    setLoading(false);
+  }, []);
+
+  const handleEnter = async (firstName: string, lastName: string) => {
+    try {
+      const response = await axios.post("/api/users", { firstName, lastName });
+      const newUser = response.data;
+      setUser(newUser);
+      localStorage.setItem("cinetrack_user", JSON.stringify(newUser));
+    } catch (error) {
+      console.error("Error entering platform:", error);
+    }
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    localStorage.removeItem("cinetrack_user");
+    setActiveTab("dashboard");
+  };
+
+  if (loading) return null;
+
+  if (!user) {
+    return <LandingPage onEnter={handleEnter} />;
+  }
+
+  return (
+    <div className="flex min-h-screen bg-[#050505] text-white font-sans selection:bg-indigo-500/30">
+      <Sidebar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        user={user}
+        onLogout={handleLogout}
+      />
+      
+      <main className="flex-1 overflow-y-auto custom-scrollbar relative">
+        {/* Background Glows */}
+        <div className="fixed top-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-600/10 blur-[120px] rounded-full pointer-events-none" />
+        <div className="fixed bottom-[-10%] left-[20%] w-[40%] h-[40%] bg-purple-600/10 blur-[120px] rounded-full pointer-events-none" />
+
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+            className="min-h-full flex flex-col"
+          >
+            {activeTab === "dashboard" && <Dashboard />}
+            {activeTab === "add" && <AddMoviePage />}
+            {activeTab === "admin" && <AdminPanel />}
+          </motion.div>
+        </AnimatePresence>
+      </main>
+    </div>
+  );
+}
