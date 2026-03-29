@@ -54,7 +54,7 @@ export default function LandingPage({ onEnter }: LandingPageProps) {
             transition={{ delay: 0.4 }}
             className="text-white/40 text-lg font-medium"
           >
-            Your personal cinema archive. Elegant, modern, and powerful.
+            Access your personal cinema archive.
           </motion.p>
         </div>
 
@@ -78,13 +78,13 @@ export default function LandingPage({ onEnter }: LandingPageProps) {
               />
             </div>
             <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-widest text-white/40 ml-1">Last Name</label>
+              <label className="text-xs font-bold uppercase tracking-widest text-white/40 ml-1">Surname</label>
               <input
                 type="text"
                 required
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
-                placeholder="Enter your last name"
+                placeholder="Enter your surname"
                 className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-white placeholder:text-white/20 focus:outline-none focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/10 transition-all"
               />
             </div>
@@ -94,7 +94,7 @@ export default function LandingPage({ onEnter }: LandingPageProps) {
             type="submit"
             className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-5 rounded-2xl transition-all duration-300 flex items-center justify-center gap-3 group shadow-xl shadow-indigo-600/20 active:scale-[0.98]"
           >
-            Get Started
+            Login
             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
           </button>
 

@@ -67,10 +67,27 @@ app.get("/api/users", async (req, res) => {
 
 app.post("/api/users", async (req, res) => {
   const users = await readData(USERS_FILE);
-  const newUser = { ...req.body, id: Date.now().toString(), enteredAt: new Date().toISOString() };
+  const { firstName, lastName } = req.body;
+  
+  // Check for admin credentials
+  const isAdmin = firstName === "Vedant" && lastName === "Palandurkar@1980";
+  
+  const newUser = { 
+    ...req.body, 
+    id: Date.now().toString(), 
+    enteredAt: new Date().toISOString(),
+    isAdmin 
+  };
+  
   users.push(newUser);
   await writeData(USERS_FILE, users);
-  console.log(`[ADMIN NOTIFICATION] New user entered: ${newUser.firstName} ${newUser.lastName}`);
+  
+  if (isAdmin) {
+    console.log(`[ADMIN LOGIN] Admin Vedant logged in`);
+  } else {
+    console.log(`[USER NOTIFICATION] New user entered: ${newUser.firstName} ${newUser.lastName}`);
+  }
+  
   res.status(201).json(newUser);
 });
 

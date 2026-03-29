@@ -1,31 +1,25 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { Movie, MovieStatus } from "../types";
+import { Movie, MovieStatus, User } from "../types";
 import MovieCard from "../components/MovieCard";
 import SearchFilter from "../components/SearchFilter";
 import { motion, AnimatePresence } from "motion/react";
 import { Clapperboard, Loader2 } from "lucide-react";
 
-export default function Dashboard() {
-  const [movies, setMovies] = useState<Movie[]>([]);
-  const [loading, setLoading] = useState(true);
+interface DashboardProps {
+  user: User;
+  movies: Movie[];
+  setMovies: React.Dispatch<React.SetStateAction<Movie[]>>;
+  loading: boolean;
+}
+
+export default function Dashboard({ user, movies, setMovies, loading }: DashboardProps) {
   const [search, setSearch] = useState("");
   const [genre, setGenre] = useState("All");
   const [status, setStatus] = useState<MovieStatus | "All">("All");
 
-  useEffect(() => {
-    fetchMovies();
-  }, []);
-
-  const fetchMovies = async () => {
-    try {
-      const response = await axios.get("/api/movies");
-      setMovies(response.data);
-    } catch (error) {
-      console.error("Error fetching movies:", error);
-    } finally {
-      setLoading(false);
-    }
+  const handleUpdateMovie = (updatedMovie: Movie) => {
+    setMovies((prev) => prev.map((m) => (m.id === updatedMovie.id ? updatedMovie : m)));
   };
 
   const filteredMovies = movies.filter((movie) => {
@@ -53,6 +47,11 @@ export default function Dashboard() {
         <h2 className="text-6xl font-black text-white mb-4 tracking-tighter">
           Cinema <span className="text-white/20">Archive</span>
         </h2>
+        <div className="flex items-center gap-2 mb-6">
+          <span className="text-xs font-bold uppercase tracking-widest text-indigo-400 bg-indigo-400/10 px-3 py-1 rounded-full border border-indigo-400/20">
+            Platform by Vedant
+          </span>
+        </div>
         <p className="text-white/40 text-lg max-w-2xl font-medium">
           Manage and track your cinematic journey. Discover, rate, and organize your favorite films and series.
         </p>
@@ -71,7 +70,7 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
           <AnimatePresence mode="popLayout">
             {filteredMovies.map((movie) => (
-              <MovieCard key={movie.id} movie={movie} />
+              <MovieCard key={movie.id} movie={movie} user={user} onUpdate={handleUpdateMovie} />
             ))}
           </AnimatePresence>
         </div>

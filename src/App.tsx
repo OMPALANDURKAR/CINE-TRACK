@@ -5,13 +5,15 @@ import Dashboard from "./pages/Dashboard";
 import AddMoviePage from "./pages/AddMoviePage";
 import AdminPanel from "./pages/AdminPanel";
 import Sidebar from "./components/Sidebar";
-import { User } from "./types";
+import { User, Movie } from "./types";
 import { AnimatePresence, motion } from "motion/react";
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
+  const [movies, setMovies] = useState<Movie[]>([]);
   const [activeTab, setActiveTab] = useState("dashboard");
   const [loading, setLoading] = useState(true);
+  const [moviesLoading, setMoviesLoading] = useState(false);
 
   useEffect(() => {
     const savedUser = localStorage.getItem("cinetrack_user");
@@ -20,6 +22,24 @@ export default function App() {
     }
     setLoading(false);
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      fetchMovies();
+    }
+  }, [user]);
+
+  const fetchMovies = async () => {
+    setMoviesLoading(true);
+    try {
+      const response = await axios.get("/api/movies");
+      setMovies(response.data);
+    } catch (error) {
+      console.error("Error fetching movies:", error);
+    } finally {
+      setMoviesLoading(false);
+    }
+  };
 
   const handleEnter = async (firstName: string, lastName: string) => {
     try {
@@ -67,9 +87,36 @@ export default function App() {
             transition={{ duration: 0.4, ease: "easeOut" }}
             className="min-h-full flex flex-col"
           >
-            {activeTab === "dashboard" && <Dashboard />}
-            {activeTab === "add" && <AddMoviePage />}
-            {activeTab === "admin" && <AdminPanel />}
+            {activeTab === "dashboard" && (
+              <Dashboard 
+                user={user} 
+                movies={movies} 
+                setMovies={setMovies} 
+                loading={moviesLoading} 
+              />
+            )}
+            {activeTab === "add" && (
+              <AddMoviePage 
+                user={user} 
+                onMovieAdded={fetchMovies} 
+              />
+            )}
+            {activeTab === "admin" && user.isAdmin && (
+              <AdminPanel 
+                user={user} 
+                movies={movies} 
+                setMovies={setMovies} 
+                loading={moviesLoading} 
+              />
+            )}
+            {activeTab === "admin" && !user.isAdmin && (
+              <Dashboard 
+                user={user} 
+                movies={movies} 
+                setMovies={setMovies} 
+                loading={moviesLoading} 
+              />
+            )}
           </motion.div>
         </AnimatePresence>
       </main>

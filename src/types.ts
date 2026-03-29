@@ -10,6 +10,8 @@ export interface Movie {
   tmdbId?: string;
   overview?: string;
   releaseDate?: string;
+  platform?: string;
+  addedBy?: string;
 }
 
 export interface User {
@@ -17,4 +19,5 @@ export interface User {
   firstName: string;
   lastName: string;
   enteredAt: string;
+  isAdmin?: boolean;
 }

@@ -2,10 +2,12 @@ import React from "react";
 import { Home, PlusSquare, Settings, LogOut, Film } from "lucide-react";
 import { cn } from "../lib/utils";
 
+import { User } from "../types";
+
 interface SidebarProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
-  user: { firstName: string; lastName: string } | null;
+  user: User | null;
   onLogout: () => void;
 }
 
@@ -13,7 +15,7 @@ export default function Sidebar({ activeTab, setActiveTab, user, onLogout }: Sid
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: Home },
     { id: "add", label: "Add Movie", icon: PlusSquare },
-    { id: "admin", label: "Admin Panel", icon: Settings },
+    ...(user?.isAdmin ? [{ id: "admin", label: "Admin Panel", icon: Settings }] : []),
   ];
 
   return (

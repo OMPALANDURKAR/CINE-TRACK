@@ -1,18 +1,38 @@
 import React from "react";
-import { Star, Clock, CheckCircle, Bookmark } from "lucide-react";
-import { Movie } from "../types";
+import { Star, Clock, CheckCircle, Bookmark, Monitor, User as UserIcon, X, Send, Trash2, Loader2 } from "lucide-react";
+import { Movie, User } from "../types";
 import { cn } from "../lib/utils";
 import { motion } from "motion/react";
+import axios from "axios";
 
 interface MovieCardProps {
   movie: Movie;
+  user: User;
   onEdit?: (movie: Movie) => void;
   onDelete?: (id: string) => void;
+  onUpdate?: (movie: Movie) => void;
   isAdmin?: boolean;
   key?: React.Key;
 }
 
-export default function MovieCard({ movie, onEdit, onDelete, isAdmin }: MovieCardProps) {
+export default function MovieCard({ movie, user, onEdit, onDelete, onUpdate, isAdmin }: MovieCardProps) {
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+
+  const handleRate = async (rating: number) => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      const response = await axios.put(`/api/movies/${movie.id}`, {
+        rating: rating,
+      });
+      onUpdate?.(response.data);
+    } catch (error) {
+      console.error("Error updating rating:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const statusIcons = {
     Watched: CheckCircle,
     Watching: Clock,
@@ -40,6 +60,9 @@ export default function MovieCard({ movie, onEdit, onDelete, isAdmin }: MovieCar
           alt={movie.title}
           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
           referrerPolicy="no-referrer"
+          onError={(e) => {
+            (e.target as HTMLImageElement).src = "https://picsum.photos/seed/movie/400/600";
+          }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-60 group-hover:opacity-80 transition-opacity duration-500" />
         
@@ -54,26 +77,53 @@ export default function MovieCard({ movie, onEdit, onDelete, isAdmin }: MovieCar
         </div>
 
         <div className="absolute bottom-4 left-4 right-4">
-          <div className="flex items-center gap-1 mb-1">
-            {[...Array(5)].map((_, i) => (
-              <Star
-                key={i}
-                className={cn(
-                  "w-3 h-3",
-                  i < movie.rating ? "text-amber-400 fill-amber-400" : "text-white/20"
-                )}
-              />
-            ))}
+          <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center gap-1">
+              {[...Array(5)].map((_, i) => (
+                <button
+                  key={i}
+                  disabled={isSubmitting}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleRate(i + 1);
+                  }}
+                  className={cn(
+                    "transition-transform hover:scale-125 disabled:opacity-50",
+                    isSubmitting ? "cursor-not-allowed" : "cursor-pointer"
+                  )}
+                >
+                  <Star
+                    className={cn(
+                      "w-3.5 h-3.5 transition-colors",
+                      i < movie.rating ? "text-amber-400 fill-amber-400" : "text-white/20 hover:text-white/40"
+                    )}
+                  />
+                </button>
+              ))}
+            </div>
+            {movie.platform && (
+              <div className="flex items-center gap-1 text-[10px] font-bold text-white/40 bg-white/5 px-2 py-0.5 rounded border border-white/5">
+                <Monitor className="w-2.5 h-2.5" />
+                {movie.platform}
+              </div>
+            )}
           </div>
           <h3 className="text-lg font-bold text-white leading-tight mb-1 group-hover:text-indigo-400 transition-colors">
             {movie.title}
           </h3>
-          <p className="text-xs text-white/50 font-medium uppercase tracking-widest">{movie.genre}</p>
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-white/50 font-medium uppercase tracking-widest">{movie.genre}</p>
+            {movie.addedBy && (
+              <p className="text-[9px] text-white/20 font-medium truncate max-w-[100px]">
+                By {movie.addedBy}
+              </p>
+            )}
+          </div>
         </div>
       </div>
 
       {isAdmin && (
-        <div className="p-4 flex gap-2 border-t border-white/10 bg-black/40 backdrop-blur-md">
+        <div className="p-4 pt-0 flex gap-2 bg-black/20 backdrop-blur-md">
           <button
             onClick={() => onEdit?.(movie)}
             className="flex-1 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-white/80 text-xs font-semibold transition-colors"

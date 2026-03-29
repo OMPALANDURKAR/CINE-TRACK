@@ -1,42 +1,65 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { User, Movie } from "../types";
-import { Users, Film, Trash2, Edit3, Loader2, AlertCircle } from "lucide-react";
+import { User, Movie, MovieStatus } from "../types";
+import { Users, Film, Trash2, Edit3, Loader2, AlertCircle, X, Check, Star, Link as LinkIcon, Monitor } from "lucide-react";
 import MovieCard from "../components/MovieCard";
 import { motion, AnimatePresence } from "motion/react";
+import { cn } from "../lib/utils";
 
-export default function AdminPanel() {
+interface AdminPanelProps {
+  user: User;
+  movies: Movie[];
+  setMovies: React.Dispatch<React.SetStateAction<Movie[]>>;
+  loading: boolean;
+}
+
+export default function AdminPanel({ user, movies, setMovies, loading }: AdminPanelProps) {
   const [users, setUsers] = useState<User[]>([]);
-  const [movies, setMovies] = useState<Movie[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [editingMovie, setEditingMovie] = useState<Movie | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    fetchData();
+    fetchUsers();
   }, []);
 
-  const fetchData = async () => {
+  const fetchUsers = async () => {
     try {
-      const [usersRes, moviesRes] = await Promise.all([
-        axios.get("/api/users"),
-        axios.get("/api/movies"),
-      ]);
-      setUsers(usersRes.data);
-      setMovies(moviesRes.data);
+      const response = await axios.get("/api/users");
+      setUsers(response.data);
     } catch (error) {
-      console.error("Error fetching admin data:", error);
-    } finally {
-      setLoading(false);
+      console.error("Error fetching users:", error);
     }
   };
 
-  const handleDeleteMovie = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this movie?")) return;
+  const handleDeleteMovie = async () => {
+    if (!deletingId) return;
     try {
-      await axios.delete(`/api/movies/${id}`);
-      setMovies(movies.filter((m) => m.id !== id));
+      await axios.delete(`/api/movies/${deletingId}`);
+      setMovies(movies.filter((m) => m.id !== deletingId));
+      setDeletingId(null);
     } catch (error) {
       console.error("Error deleting movie:", error);
     }
+  };
+
+  const handleUpdateMovie = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingMovie) return;
+    setIsSaving(true);
+    try {
+      const response = await axios.put(`/api/movies/${editingMovie.id}`, editingMovie);
+      setMovies(movies.map(m => m.id === editingMovie.id ? response.data : m));
+      setEditingMovie(null);
+    } catch (error) {
+      console.error("Error updating movie:", error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleMovieUpdate = (updatedMovie: Movie) => {
+    setMovies((prev) => prev.map((m) => (m.id === updatedMovie.id ? updatedMovie : m)));
   };
 
   if (loading) {
@@ -48,7 +71,7 @@ export default function AdminPanel() {
   }
 
   return (
-    <div className="flex-1 p-12 max-w-7xl mx-auto w-full">
+    <div className="flex-1 p-12 max-w-7xl mx-auto w-full relative">
       <header className="mb-16">
         <h2 className="text-6xl font-black text-white mb-4 tracking-tighter">
           Admin <span className="text-white/20">Panel</span>
@@ -118,7 +141,10 @@ export default function AdminPanel() {
                   key={movie.id}
                   movie={movie}
                   isAdmin
-                  onDelete={handleDeleteMovie}
+                  user={user}
+                  onEdit={(m) => setEditingMovie(m)}
+                  onDelete={(id) => setDeletingId(id)}
+                  onUpdate={handleMovieUpdate}
                 />
               ))}
             </AnimatePresence>
@@ -131,6 +157,184 @@ export default function AdminPanel() {
           )}
         </div>
       </div>
+
+      {/* Edit Modal */}
+      <AnimatePresence>
+        {editingMovie && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setEditingMovie(null)}
+              className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-lg bg-neutral-900 border border-white/10 rounded-[2.5rem] p-10 shadow-2xl"
+            >
+              <button
+                onClick={() => setEditingMovie(null)}
+                className="absolute top-6 right-6 text-white/20 hover:text-white transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+
+              <h3 className="text-3xl font-bold text-white mb-8">Edit Movie</h3>
+
+              <form onSubmit={handleUpdateMovie} className="space-y-6">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-widest text-white/40 ml-1">Title</label>
+                    <input
+                      type="text"
+                      value={editingMovie.title}
+                      onChange={(e) => setEditingMovie({ ...editingMovie, title: e.target.value })}
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-white focus:outline-none focus:border-indigo-500/50 transition-all"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold uppercase tracking-widest text-white/40 ml-1">Genre</label>
+                      <select
+                        value={editingMovie.genre}
+                        onChange={(e) => setEditingMovie({ ...editingMovie, genre: e.target.value })}
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-white appearance-none focus:outline-none focus:border-indigo-500/50 transition-all"
+                      >
+                        {["Action", "Comedy", "Drama", "Horror", "Sci-Fi", "Thriller", "Animation", "Romance"].map((g) => (
+                          <option key={g} value={g} className="bg-neutral-900">{g}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold uppercase tracking-widest text-white/40 ml-1">Status</label>
+                      <select
+                        value={editingMovie.status}
+                        onChange={(e) => setEditingMovie({ ...editingMovie, status: e.target.value as MovieStatus })}
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-white appearance-none focus:outline-none focus:border-indigo-500/50 transition-all"
+                      >
+                        {["Watched", "Watching", "Wishlist"].map((s) => (
+                          <option key={s} value={s} className="bg-neutral-900">{s}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-widest text-white/40 ml-1">Platform</label>
+                    <div className="relative">
+                      <Monitor className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 w-4 h-4" />
+                      <input
+                        type="text"
+                        value={editingMovie.platform || ""}
+                        onChange={(e) => setEditingMovie({ ...editingMovie, platform: e.target.value })}
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-6 text-white focus:outline-none focus:border-indigo-500/50 transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-widest text-white/40 ml-1">Rating</label>
+                    <div className="flex gap-4 items-center bg-white/5 border border-white/10 rounded-2xl py-4 px-6">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          type="button"
+                          onClick={() => setEditingMovie({ ...editingMovie, rating: star })}
+                          className="transition-transform hover:scale-125"
+                        >
+                          <Star
+                            className={cn(
+                              "w-6 h-6 transition-colors",
+                              star <= (editingMovie.rating || 0) ? "text-amber-400 fill-amber-400" : "text-white/10"
+                            )}
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-widest text-white/40 ml-1">Poster URL</label>
+                    <div className="relative">
+                      <LinkIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 w-4 h-4" />
+                      <input
+                        type="text"
+                        value={editingMovie.posterUrl}
+                        onChange={(e) => setEditingMovie({ ...editingMovie, posterUrl: e.target.value })}
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-6 text-white focus:outline-none focus:border-indigo-500/50 transition-all"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-4 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setEditingMovie(null)}
+                    className="flex-1 py-4 rounded-2xl bg-white/5 hover:bg-white/10 text-white font-bold transition-all"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSaving}
+                    className="flex-1 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold py-4 rounded-2xl transition-all shadow-xl shadow-indigo-600/20"
+                  >
+                    {isSaving ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "Save Changes"}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Delete Confirmation Modal */}
+      <AnimatePresence>
+        {deletingId && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setDeletingId(null)}
+              className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="relative w-full max-w-sm bg-neutral-900 border border-white/10 rounded-[2.5rem] p-10 shadow-2xl text-center"
+            >
+              <div className="w-16 h-16 bg-red-400/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Trash2 className="text-red-400 w-8 h-8" />
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-2">Delete Movie?</h3>
+              <p className="text-white/40 mb-8">This action cannot be undone. The movie will be removed from the global library.</p>
+              
+              <div className="flex gap-4">
+                <button
+                  onClick={() => setDeletingId(null)}
+                  className="flex-1 py-4 rounded-2xl bg-white/5 hover:bg-white/10 text-white font-bold transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeleteMovie}
+                  className="flex-1 bg-red-500 hover:bg-red-400 text-white font-bold py-4 rounded-2xl transition-all shadow-xl shadow-red-500/20"
+                >
+                  Delete
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
+

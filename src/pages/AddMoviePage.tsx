@@ -1,12 +1,17 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { Search, Plus, Star, Link as LinkIcon, Check, Loader2 } from "lucide-react";
+import { Search, Plus, Star, Link as LinkIcon, Check, Loader2, Monitor } from "lucide-react";
 import { searchMovies } from "../lib/tmdb";
-import { Movie, MovieStatus } from "../types";
+import { Movie, MovieStatus, User } from "../types";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "../lib/utils";
 
-export default function AddMoviePage() {
+interface AddMoviePageProps {
+  user: User;
+  onMovieAdded: () => void;
+}
+
+export default function AddMoviePage({ user, onMovieAdded }: AddMoviePageProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [searching, setSearching] = useState(false);
@@ -19,6 +24,7 @@ export default function AddMoviePage() {
     rating: 3,
     status: "Watched",
     posterUrl: "",
+    platform: "",
   });
 
   const handleSearch = async (e: React.FormEvent) => {
@@ -33,7 +39,12 @@ export default function AddMoviePage() {
   const handleAddMovie = async (movieData: Partial<Movie>) => {
     setLoading(true);
     try {
-      await axios.post("/api/movies", movieData);
+      const finalMovieData = {
+        ...movieData,
+        addedBy: `${user.firstName} ${user.lastName}`,
+      };
+      await axios.post("/api/movies", finalMovieData);
+      onMovieAdded();
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
       if (movieData.tmdbId) {
@@ -46,6 +57,7 @@ export default function AddMoviePage() {
           rating: 3,
           status: "Watched",
           posterUrl: "",
+          platform: "",
         });
       }
     } catch (error) {
@@ -175,7 +187,7 @@ export default function AddMoviePage() {
                     onChange={(e) => setManualMovie({ ...manualMovie, genre: e.target.value })}
                     className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-white appearance-none focus:outline-none focus:border-indigo-500/50 transition-all"
                   >
-                    {["Action", "Comedy", "Drama", "Horror", "Sci-Fi", "Thriller", "Animation"].map((g) => (
+                    {["Action", "Comedy", "Drama", "Horror", "Sci-Fi", "Thriller", "Animation", "Romance"].map((g) => (
                       <option key={g} value={g} className="bg-neutral-900">{g}</option>
                     ))}
                   </select>
@@ -191,6 +203,20 @@ export default function AddMoviePage() {
                       <option key={s} value={s} className="bg-neutral-900">{s}</option>
                     ))}
                   </select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-widest text-white/40 ml-1">Platform</label>
+                <div className="relative">
+                  <Monitor className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 w-4 h-4" />
+                  <input
+                    type="text"
+                    value={manualMovie.platform}
+                    onChange={(e) => setManualMovie({ ...manualMovie, platform: e.target.value })}
+                    placeholder="Netflix, Prime, etc."
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-6 text-white focus:outline-none focus:border-indigo-500/50 transition-all"
+                  />
                 </div>
               </div>
 
@@ -214,19 +240,21 @@ export default function AddMoviePage() {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-widest text-white/40 ml-1">Poster URL (Optional)</label>
-                <div className="relative">
-                  <LinkIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 w-4 h-4" />
-                  <input
-                    type="text"
-                    value={manualMovie.posterUrl}
-                    onChange={(e) => setManualMovie({ ...manualMovie, posterUrl: e.target.value })}
-                    placeholder="https://..."
-                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-6 text-white focus:outline-none focus:border-indigo-500/50 transition-all"
-                  />
+              {user.isAdmin && (
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-widest text-white/40 ml-1">Poster URL (Optional)</label>
+                  <div className="relative">
+                    <LinkIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 w-4 h-4" />
+                    <input
+                      type="text"
+                      value={manualMovie.posterUrl}
+                      onChange={(e) => setManualMovie({ ...manualMovie, posterUrl: e.target.value })}
+                      placeholder="https://..."
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-6 text-white focus:outline-none focus:border-indigo-500/50 transition-all"
+                    />
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
             <button
