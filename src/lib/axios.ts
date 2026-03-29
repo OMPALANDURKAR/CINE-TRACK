@@ -2,21 +2,24 @@ import axios from "axios";
 
 // ✅ Centralized axios instance for deployment
 const getBaseURL = () => {
+  // 1. Try env var (standard way)
   const envURL = import.meta.env.VITE_API_URL;
-  
-  // If we have an env var, use it
   if (envURL && envURL !== "undefined" && envURL.length > 0) {
     return envURL;
   }
 
-  // Fallback for local development
+  // 2. SAFETY NET: If we are on your Vercel domain, force the Render URL
+  if (typeof window !== "undefined" && window.location.origin.includes("cinetrack-steel.vercel.app")) {
+    console.log("[AXIOS] Safety net triggered: Forcing Render backend URL");
+    return "https://cine-track-pew3.onrender.com";
+  }
+
+  // 3. Fallback for local development
   if (typeof window !== "undefined" && window.location.hostname === "localhost") {
     return "http://localhost:5000";
   }
 
-  // If we are on Vercel but VITE_API_URL is missing, we have a build-time issue
-  console.error("[AXIOS] CRITICAL: VITE_API_URL is missing at build time!");
-  return ""; // This will cause relative requests and 404s on Vercel
+  return ""; 
 };
 
 const API_URL = getBaseURL();
