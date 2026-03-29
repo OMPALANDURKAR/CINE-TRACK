@@ -8,17 +8,15 @@ const app = express();
 // ✅ IMPORTANT: Use dynamic port for Render
 const PORT = Number(process.env.PORT) || 5000;
 
-app.use(cors({
-  origin: [
-    "https://cinetrack-steel.vercel.app",
-    "https://cinetrack-git-main-vedant-palandurkars-projects.vercel.app",
-    "https://cinetrack-mma9u6rwy-vedant-palandurkars-projects.vercel.app",
-    "http://localhost:3000",
-    "http://localhost:5173"
-  ]
-}));
+app.use(cors()); // Allow all origins for debugging
 
 app.use(express.json());
+
+// ✅ Request logging
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  next();
+});
 
 // ✅ File paths
 const MOVIES_FILE = path.join(process.cwd(), "data", "movies.json");
@@ -92,38 +90,45 @@ app.delete("/api/movies/:id", async (req, res) => {
 
 // ---------------- USERS API ----------------
 app.get("/api/users", async (req, res) => {
-  const users = await readData(USERS_FILE);
-  res.json(users);
+  try {
+    const users = await readData(USERS_FILE);
+    res.json(users);
+  } catch (error) {
+    console.error("Error reading users:", error);
+    res.status(500).json({ message: "Error reading users" });
+  }
 });
 
 app.post("/api/users", async (req, res) => {
-  const users = await readData(USERS_FILE);
+  console.log("POST /api/users - body:", req.body);
+  try {
+    const users = await readData(USERS_FILE);
+    const { firstName, lastName } = req.body;
 
-  const { firstName, lastName } = req.body;
+    if (!firstName || !lastName) {
+      return res.status(400).json({ message: "First name and last name are required" });
+    }
 
-  // ✅ Admin check
-  const isAdmin =
-    firstName === "Vedant" && lastName === "Palandurkar@1980";
+    // ✅ Admin check
+    const isAdmin =
+      firstName === "Vedant" && lastName === "Palandurkar@1980";
 
-  const newUser = {
-    ...req.body,
-    id: Date.now().toString(),
-    enteredAt: new Date().toISOString(),
-    isAdmin,
-  };
+    const newUser = {
+      ...req.body,
+      id: Date.now().toString(),
+      enteredAt: new Date().toISOString(),
+      isAdmin,
+    };
 
-  users.push(newUser);
-  await writeData(USERS_FILE, users);
+    users.push(newUser);
+    await writeData(USERS_FILE, users);
 
-  if (isAdmin) {
-    console.log(`[ADMIN LOGIN] Admin Vedant logged in`);
-  } else {
-    console.log(
-      `[USER LOGIN] ${newUser.firstName} ${newUser.lastName}`
-    );
+    console.log(`[LOGIN SUCCESS] ${isAdmin ? "Admin" : "User"}: ${firstName} ${lastName}`);
+    res.status(201).json(newUser);
+  } catch (error) {
+    console.error("Error in POST /api/users:", error);
+    res.status(500).json({ message: "Internal server error during login" });
   }
-
-  res.status(201).json(newUser);
 });
 
 // ---------------- HEALTH CHECK ----------------

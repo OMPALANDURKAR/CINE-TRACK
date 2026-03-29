@@ -53,7 +53,9 @@ export default function App() {
       localStorage.setItem("cinetrack_user", JSON.stringify(newUser));
     } catch (error: any) {
       console.error("Error entering platform:", error);
-      if (error.code === "ECONNABORTED") {
+      if (error.response?.data?.message) {
+        setLoginError(error.response.data.message);
+      } else if (error.code === "ECONNABORTED") {
         setLoginError("Backend is taking too long to wake up. Please try again in a few seconds.");
       } else if (error.message === "Network Error") {
         setLoginError("Could not connect to backend. Please check your VITE_API_URL in Vercel.");
