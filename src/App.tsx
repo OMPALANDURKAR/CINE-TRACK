@@ -14,6 +14,8 @@ export default function App() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [loading, setLoading] = useState(true);
   const [moviesLoading, setMoviesLoading] = useState(false);
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
 
   useEffect(() => {
     const savedUser = localStorage.getItem("cinetrack_user");
@@ -42,13 +44,24 @@ export default function App() {
   };
 
   const handleEnter = async (firstName: string, lastName: string) => {
+    setLoginLoading(true);
+    setLoginError(null);
     try {
       const response = await axios.post("/api/users", { firstName, lastName });
       const newUser = response.data;
       setUser(newUser);
       localStorage.setItem("cinetrack_user", JSON.stringify(newUser));
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error entering platform:", error);
+      if (error.code === "ECONNABORTED") {
+        setLoginError("Backend is taking too long to wake up. Please try again in a few seconds.");
+      } else if (error.message === "Network Error") {
+        setLoginError("Could not connect to backend. Please check your VITE_API_URL in Vercel.");
+      } else {
+        setLoginError("Login failed. Check console for details.");
+      }
+    } finally {
+      setLoginLoading(false);
     }
   };
 
@@ -61,7 +74,13 @@ export default function App() {
   if (loading) return null;
 
   if (!user) {
-    return <LandingPage onEnter={handleEnter} />;
+    return (
+      <LandingPage 
+        onEnter={handleEnter} 
+        loading={loginLoading} 
+        error={loginError} 
+      />
+    );
   }
 
   return (
