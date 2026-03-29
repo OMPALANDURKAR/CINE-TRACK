@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+import axios from "../lib/axios";
 import { Search, Plus, Star, Link as LinkIcon, Check, Loader2, Monitor } from "lucide-react";
 import { searchMovies } from "../lib/tmdb";
 import { Movie, MovieStatus, User } from "../types";

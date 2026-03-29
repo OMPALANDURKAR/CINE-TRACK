@@ -3,7 +3,7 @@ import { Star, Clock, CheckCircle, Bookmark, Monitor, User as UserIcon, X, Send,
 import { Movie, User } from "../types";
 import { cn } from "../lib/utils";
 import { motion } from "motion/react";
-import axios from "axios";
+import axios from "../lib/axios";
 
 interface MovieCardProps {
   movie: Movie;

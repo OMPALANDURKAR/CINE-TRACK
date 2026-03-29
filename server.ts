@@ -6,7 +6,7 @@ import path from "path";
 const app = express();
 
 // ✅ IMPORTANT: Use dynamic port for Render
-const PORT = process.env.PORT || 5000;
+const PORT = Number(process.env.PORT) || 5000;
 
 app.use(cors({
   origin: "*" // later replace with your Vercel URL
@@ -18,8 +18,19 @@ app.use(express.json());
 const MOVIES_FILE = path.join(process.cwd(), "data", "movies.json");
 const USERS_FILE = path.join(process.cwd(), "data", "users.json");
 
+// ✅ Ensure data directory exists
+async function ensureDataDir() {
+  const dataDir = path.join(process.cwd(), "data");
+  try {
+    await fs.access(dataDir);
+  } catch {
+    await fs.mkdir(dataDir, { recursive: true });
+  }
+}
+
 // ---------------- HELPER FUNCTIONS ----------------
 async function readData(file: string) {
+  await ensureDataDir();
   try {
     const data = await fs.readFile(file, "utf-8");
     return JSON.parse(data);
@@ -29,6 +40,7 @@ async function readData(file: string) {
 }
 
 async function writeData(file: string, data: any) {
+  await ensureDataDir();
   await fs.writeFile(file, JSON.stringify(data, null, 2));
 }
 

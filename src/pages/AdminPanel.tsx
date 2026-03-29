@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import axios from "../lib/axios";
 import { User, Movie, MovieStatus } from "../types";
 import { Users, Film, Trash2, Edit3, Loader2, AlertCircle, X, Check, Star, Link as LinkIcon, Monitor } from "lucide-react";
 import MovieCard from "../components/MovieCard";
