@@ -2,18 +2,23 @@ import express from "express";
 import cors from "cors";
 import fs from "fs/promises";
 import path from "path";
-import { createServer as createViteServer } from "vite";
 
 const app = express();
-const PORT = 3000;
 
-app.use(cors());
+// ✅ IMPORTANT: Use dynamic port for Render
+const PORT = process.env.PORT || 5000;
+
+app.use(cors({
+  origin: "*" // later replace with your Vercel URL
+}));
+
 app.use(express.json());
 
+// ✅ File paths
 const MOVIES_FILE = path.join(process.cwd(), "data", "movies.json");
 const USERS_FILE = path.join(process.cwd(), "data", "users.json");
 
-// Helper functions for file I/O
+// ---------------- HELPER FUNCTIONS ----------------
 async function readData(file: string) {
   try {
     const data = await fs.readFile(file, "utf-8");
@@ -27,7 +32,7 @@ async function writeData(file: string, data: any) {
   await fs.writeFile(file, JSON.stringify(data, null, 2));
 }
 
-// API Routes
+// ---------------- MOVIES API ----------------
 app.get("/api/movies", async (req, res) => {
   const movies = await readData(MOVIES_FILE);
   res.json(movies);
@@ -36,14 +41,18 @@ app.get("/api/movies", async (req, res) => {
 app.post("/api/movies", async (req, res) => {
   const movies = await readData(MOVIES_FILE);
   const newMovie = { ...req.body, id: Date.now().toString() };
+
   movies.push(newMovie);
   await writeData(MOVIES_FILE, movies);
+
   res.status(201).json(newMovie);
 });
 
 app.put("/api/movies/:id", async (req, res) => {
   const movies = await readData(MOVIES_FILE);
+
   const index = movies.findIndex((m: any) => m.id === req.params.id);
+
   if (index !== -1) {
     movies[index] = { ...movies[index], ...req.body };
     await writeData(MOVIES_FILE, movies);
@@ -55,11 +64,15 @@ app.put("/api/movies/:id", async (req, res) => {
 
 app.delete("/api/movies/:id", async (req, res) => {
   const movies = await readData(MOVIES_FILE);
+
   const filtered = movies.filter((m: any) => m.id !== req.params.id);
+
   await writeData(MOVIES_FILE, filtered);
+
   res.status(204).send();
 });
 
+// ---------------- USERS API ----------------
 app.get("/api/users", async (req, res) => {
   const users = await readData(USERS_FILE);
   res.json(users);
@@ -67,49 +80,41 @@ app.get("/api/users", async (req, res) => {
 
 app.post("/api/users", async (req, res) => {
   const users = await readData(USERS_FILE);
+
   const { firstName, lastName } = req.body;
-  
-  // Check for admin credentials
-  const isAdmin = firstName === "Vedant" && lastName === "Palandurkar@1980";
-  
-  const newUser = { 
-    ...req.body, 
-    id: Date.now().toString(), 
+
+  // ✅ Admin check
+  const isAdmin =
+    firstName === "Vedant" && lastName === "Palandurkar@1980";
+
+  const newUser = {
+    ...req.body,
+    id: Date.now().toString(),
     enteredAt: new Date().toISOString(),
-    isAdmin 
+    isAdmin,
   };
-  
+
   users.push(newUser);
   await writeData(USERS_FILE, users);
-  
+
   if (isAdmin) {
     console.log(`[ADMIN LOGIN] Admin Vedant logged in`);
   } else {
-    console.log(`[USER NOTIFICATION] New user entered: ${newUser.firstName} ${newUser.lastName}`);
+    console.log(
+      `[USER LOGIN] ${newUser.firstName} ${newUser.lastName}`
+    );
   }
-  
+
   res.status(201).json(newUser);
 });
 
-// Vite middleware for development
-async function setupVite() {
-  if (process.env.NODE_ENV !== "production") {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: "spa",
-    });
-    app.use(vite.middlewares);
-  } else {
-    const distPath = path.join(process.cwd(), "dist");
-    app.use(express.static(distPath));
-    app.get("*", (req, res) => {
-      res.sendFile(path.join(distPath, "index.html"));
-    });
-  }
+// ---------------- HEALTH CHECK ----------------
+// ✅ Useful for debugging deployment
+app.get("/", (req, res) => {
+  res.send("Backend is running 🚀");
+});
 
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-  });
-}
-
-setupVite();
+// ---------------- START SERVER ----------------
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server running on port ${PORT}`);
+});
