@@ -9,7 +9,13 @@ const app = express();
 const PORT = Number(process.env.PORT) || 5000;
 
 app.use(cors({
-  origin: "*" // later replace with your Vercel URL
+  origin: [
+    "https://cinetrack-steel.vercel.app",
+    "https://cinetrack-git-main-vedant-palandurkars-projects.vercel.app",
+    "https://cinetrack-mma9u6rwy-vedant-palandurkars-projects.vercel.app",
+    "http://localhost:3000",
+    "http://localhost:5173"
+  ]
 }));
 
 app.use(express.json());
