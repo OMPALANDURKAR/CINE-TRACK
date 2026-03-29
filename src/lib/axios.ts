@@ -2,23 +2,33 @@ import axios from "axios";
 
 // ✅ Centralized axios instance for deployment
 const getBaseURL = () => {
-  // 1. Try env var (standard way)
+  if (typeof window === "undefined") return "";
+
+  const origin = window.location.origin;
+  const hostname = window.location.hostname;
   const envURL = import.meta.env.VITE_API_URL;
+
+  console.log("[AXIOS] Current Origin:", origin);
+  console.log("[AXIOS] VITE_API_URL from env:", envURL);
+
+  // 1. SAFETY NET: If we are on ANY Vercel domain, force the Render URL
+  // This is the most reliable way since env vars are failing to bake in
+  if (hostname.includes("vercel.app") || origin.includes("vercel.app")) {
+    console.log("[AXIOS] Vercel environment detected. Forcing Render backend URL.");
+    return "https://cine-track-pew3.onrender.com";
+  }
+
+  // 2. Try env var (standard way)
   if (envURL && envURL !== "undefined" && envURL.length > 0) {
     return envURL;
   }
 
-  // 2. SAFETY NET: If we are on your Vercel domain, force the Render URL
-  if (typeof window !== "undefined" && window.location.origin.includes("cinetrack-steel.vercel.app")) {
-    console.log("[AXIOS] Safety net triggered: Forcing Render backend URL");
-    return "https://cine-track-pew3.onrender.com";
-  }
-
   // 3. Fallback for local development
-  if (typeof window !== "undefined" && window.location.hostname === "localhost") {
+  if (hostname === "localhost" || hostname === "127.0.0.1") {
     return "http://localhost:5000";
   }
 
+  console.error("[AXIOS] CRITICAL: baseURL is empty! Requests will fail with 404 on Vercel.");
   return ""; 
 };
 
