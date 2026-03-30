@@ -35,7 +35,7 @@ export default function App() {
           }
         } catch (err: any) {
           console.error("Error in getDoc during onAuthStateChanged:", err);
-          setLoginError(`Database Error: ${err.message || "Failed to connect"}`);
+          setLoginError(`Database Error (Auth State): ${err.message || "Failed to connect"}`);
         }
       } else {
         setUser(null);
