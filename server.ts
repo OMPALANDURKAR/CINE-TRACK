@@ -1,143 +1,61 @@
 import express from "express";
-import cors from "cors";
-import fs from "fs/promises";
+import { createServer as createViteServer } from "vite";
 import path from "path";
+import fs from "fs/promises";
+import cors from "cors";
 
-const app = express();
+async function startServer() {
+  const app = express();
+  const PORT = Number(process.env.PORT) || 3000;
 
-// ✅ IMPORTANT: Use dynamic port for Render
-const PORT = Number(process.env.PORT) || 5000;
+  app.use(cors());
+  app.use(express.json());
 
-app.use(cors()); // Allow all origins for debugging
-
-app.use(express.json());
-
-// ✅ Request logging
-app.use((req, res, next) => {
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
-  next();
-});
-
-// ✅ File paths
-const MOVIES_FILE = path.join(process.cwd(), "data", "movies.json");
-const USERS_FILE = path.join(process.cwd(), "data", "users.json");
-
-// ✅ Ensure data directory exists
-async function ensureDataDir() {
-  const dataDir = path.join(process.cwd(), "data");
-  try {
-    await fs.access(dataDir);
-  } catch {
-    await fs.mkdir(dataDir, { recursive: true });
-  }
-}
-
-// ---------------- HELPER FUNCTIONS ----------------
-async function readData(file: string) {
-  await ensureDataDir();
-  try {
-    const data = await fs.readFile(file, "utf-8");
-    return JSON.parse(data);
-  } catch (error) {
-    return [];
-  }
-}
-
-async function writeData(file: string, data: any) {
-  await ensureDataDir();
-  await fs.writeFile(file, JSON.stringify(data, null, 2));
-}
-
-// ---------------- MOVIES API ----------------
-app.get("/api/movies", async (req, res) => {
-  const movies = await readData(MOVIES_FILE);
-  res.json(movies);
-});
-
-app.post("/api/movies", async (req, res) => {
-  const movies = await readData(MOVIES_FILE);
-  const newMovie = { ...req.body, id: Date.now().toString() };
-
-  movies.push(newMovie);
-  await writeData(MOVIES_FILE, movies);
-
-  res.status(201).json(newMovie);
-});
-
-app.put("/api/movies/:id", async (req, res) => {
-  const movies = await readData(MOVIES_FILE);
-
-  const index = movies.findIndex((m: any) => m.id === req.params.id);
-
-  if (index !== -1) {
-    movies[index] = { ...movies[index], ...req.body };
-    await writeData(MOVIES_FILE, movies);
-    res.json(movies[index]);
-  } else {
-    res.status(404).json({ message: "Movie not found" });
-  }
-});
-
-app.delete("/api/movies/:id", async (req, res) => {
-  const movies = await readData(MOVIES_FILE);
-
-  const filtered = movies.filter((m: any) => m.id !== req.params.id);
-
-  await writeData(MOVIES_FILE, filtered);
-
-  res.status(204).send();
-});
-
-// ---------------- USERS API ----------------
-app.get("/api/users", async (req, res) => {
-  try {
-    const users = await readData(USERS_FILE);
-    res.json(users);
-  } catch (error) {
-    console.error("Error reading users:", error);
-    res.status(500).json({ message: "Error reading users" });
-  }
-});
-
-app.post("/api/users", async (req, res) => {
-  console.log("POST /api/users - body:", req.body);
-  try {
-    const users = await readData(USERS_FILE);
-    const { firstName, lastName } = req.body;
-
-    if (!firstName || !lastName) {
-      return res.status(400).json({ message: "First name and last name are required" });
+  // Request logging
+  app.use((req, res, next) => {
+    if (!req.url.startsWith("/@vite") && !req.url.startsWith("/src")) {
+      console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
     }
+    next();
+  });
 
-    // ✅ Admin check
-    const isAdmin =
-      firstName === "Vedant" && lastName === "Palandurkar@1980";
+  // API routes (Minimal health check)
+  app.get("/api/health", (req, res) => {
+    res.json({ status: "ok", message: "Backend is running 🚀", port: PORT });
+  });
 
-    const newUser = {
-      ...req.body,
-      id: Date.now().toString(),
-      enteredAt: new Date().toISOString(),
-      isAdmin,
-    };
+  // ---------------- VITE MIDDLEWARE ----------------
+  if (process.env.NODE_ENV !== "production") {
+    const vite = await createViteServer({
+      server: { middlewareMode: true },
+      appType: "custom",
+    });
+    app.use(vite.middlewares);
 
-    users.push(newUser);
-    await writeData(USERS_FILE, users);
+    app.get("*", async (req, res, next) => {
+      const url = req.originalUrl;
+      if (url.startsWith("/api")) return next();
 
-    console.log(`[LOGIN SUCCESS] ${isAdmin ? "Admin" : "User"}: ${firstName} ${lastName}`);
-    res.status(201).json(newUser);
-  } catch (error) {
-    console.error("Error in POST /api/users:", error);
-    res.status(500).json({ message: "Internal server error during login" });
+      try {
+        let template = await fs.readFile(path.resolve(process.cwd(), "index.html"), "utf-8");
+        template = await vite.transformIndexHtml(url, template);
+        res.status(200).set({ "Content-Type": "text/html" }).end(template);
+      } catch (e) {
+        vite.ssrFixStacktrace(e as Error);
+        next(e);
+      }
+    });
+  } else {
+    const distPath = path.join(process.cwd(), "dist");
+    app.use(express.static(distPath));
+    app.get("*", (req, res) => {
+      res.sendFile(path.join(distPath, "index.html"));
+    });
   }
-});
 
-// ---------------- HEALTH CHECK ----------------
-// ✅ Useful for debugging deployment
-app.get("/", (req, res) => {
-  res.send("Backend is running 🚀");
-});
+  app.listen(PORT, "0.0.0.0", () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+  });
+}
 
-// ---------------- START SERVER ----------------
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server running on port ${PORT}`);
-});
+startServer().catch(console.error);

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import axios from "../lib/axios";
 import { Movie, MovieStatus, User } from "../types";
 import MovieCard from "../components/MovieCard";
 import SearchFilter from "../components/SearchFilter";

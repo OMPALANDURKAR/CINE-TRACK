@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import axios from "../lib/axios";
+import { db } from "../lib/firebase";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { Search, Plus, Star, Link as LinkIcon, Check, Loader2, Monitor } from "lucide-react";
 import { searchMovies } from "../lib/tmdb";
 import { Movie, MovieStatus, User } from "../types";
@@ -41,9 +42,13 @@ export default function AddMoviePage({ user, onMovieAdded }: AddMoviePageProps) 
     try {
       const finalMovieData = {
         ...movieData,
-        addedBy: `${user.firstName} ${user.lastName}`,
+        addedBy: user.id, // Store UID instead of name for better security rules
+        authorName: `${user.firstName} ${user.lastName}`, // Denormalize for display
+        createdAt: serverTimestamp(),
       };
-      await axios.post("/api/movies", finalMovieData);
+      
+      await addDoc(collection(db, "movies"), finalMovieData);
+      
       onMovieAdded();
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);

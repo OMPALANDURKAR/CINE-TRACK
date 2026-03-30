@@ -1,0 +1,42 @@
+{
+  "entities": {
+    "Movie": {
+      "title": "Movie",
+      "description": "A movie or series in the collection.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique ID of the movie." },
+        "title": { "type": "string", "description": "Title of the movie." },
+        "genre": { "type": "string", "description": "Genre of the movie." },
+        "rating": { "type": "number", "description": "Rating out of 10." },
+        "status": { "type": "string", "enum": ["Watched", "To Watch", "Watching"], "description": "Current status." },
+        "addedBy": { "type": "string", "description": "User ID of the person who added the movie." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the movie was added." }
+      },
+      "required": ["title", "genre", "rating", "status", "addedBy", "createdAt"]
+    },
+    "User": {
+      "title": "User",
+      "description": "A user of the platform.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique user ID." },
+        "firstName": { "type": "string", "description": "First name." },
+        "lastName": { "type": "string", "description": "Last name." },
+        "isAdmin": { "type": "boolean", "description": "Whether the user is an admin." },
+        "enteredAt": { "type": "string", "format": "date-time", "description": "When the user first logged in." }
+      },
+      "required": ["firstName", "lastName", "isAdmin", "enteredAt"]
+    }
+  },
+  "firestore": {
+    "/movies/{movieId}": {
+      "schema": "Movie",
+      "description": "Collection of movies."
+    },
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Collection of users."
+    }
+  }
+}

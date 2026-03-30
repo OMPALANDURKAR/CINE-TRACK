@@ -3,7 +3,8 @@ import { Star, Clock, CheckCircle, Bookmark, Monitor, User as UserIcon, X, Send,
 import { Movie, User } from "../types";
 import { cn } from "../lib/utils";
 import { motion } from "motion/react";
-import axios from "../lib/axios";
+import { db } from "../lib/firebase";
+import { doc, updateDoc } from "firebase/firestore";
 
 interface MovieCardProps {
   movie: Movie;
@@ -22,10 +23,13 @@ export default function MovieCard({ movie, user, onEdit, onDelete, onUpdate, isA
     if (isSubmitting) return;
     setIsSubmitting(true);
     try {
-      const response = await axios.put(`/api/movies/${movie.id}`, {
+      const movieRef = doc(db, "movies", movie.id);
+      await updateDoc(movieRef, {
         rating: rating,
       });
-      onUpdate?.(response.data);
+      // onUpdate is no longer strictly needed if we use onSnapshot in App.tsx, 
+      // but we'll keep it for local UI feedback if any
+      onUpdate?.({ ...movie, rating });
     } catch (error) {
       console.error("Error updating rating:", error);
     } finally {

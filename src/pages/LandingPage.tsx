@@ -127,6 +127,13 @@ export default function LandingPage({ onEnter, loading, error }: LandingPageProp
             <Sparkles className="w-3 h-3" />
             <span>Premium movie tracking experience</span>
           </div>
+
+          {/* DEBUG INFO - DELETE LATER */}
+          <div className="mt-8 pt-6 border-t border-white/5 text-center">
+            <p className="text-[10px] font-mono text-white/10 uppercase tracking-widest">
+              Debug: {import.meta.env.MODE} | API: {import.meta.env.VITE_API_URL || "AUTO"}
+            </p>
+          </div>
         </motion.form>
       </motion.div>
     </div>

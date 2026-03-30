@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import axios from "../lib/axios";
+import { db } from "../lib/firebase";
+import { collection, doc, deleteDoc, updateDoc, getDocs, query, orderBy } from "firebase/firestore";
 import { User, Movie, MovieStatus } from "../types";
 import { Users, Film, Trash2, Edit3, Loader2, AlertCircle, X, Check, Star, Link as LinkIcon, Monitor } from "lucide-react";
 import MovieCard from "../components/MovieCard";
@@ -25,8 +26,13 @@ export default function AdminPanel({ user, movies, setMovies, loading }: AdminPa
 
   const fetchUsers = async () => {
     try {
-      const response = await axios.get("/api/users");
-      setUsers(response.data);
+      const q = query(collection(db, "users"), orderBy("enteredAt", "desc"));
+      const querySnapshot = await getDocs(q);
+      const usersData = querySnapshot.docs.map(doc => ({
+        ...doc.data(),
+        id: doc.id
+      })) as User[];
+      setUsers(usersData);
     } catch (error) {
       console.error("Error fetching users:", error);
     }
@@ -35,7 +41,8 @@ export default function AdminPanel({ user, movies, setMovies, loading }: AdminPa
   const handleDeleteMovie = async () => {
     if (!deletingId) return;
     try {
-      await axios.delete(`/api/movies/${deletingId}`);
+      await deleteDoc(doc(db, "movies", deletingId));
+      // No need to manually filter if onSnapshot is used in App.tsx, but good for immediate feedback
       setMovies(movies.filter((m) => m.id !== deletingId));
       setDeletingId(null);
     } catch (error) {
@@ -48,8 +55,8 @@ export default function AdminPanel({ user, movies, setMovies, loading }: AdminPa
     if (!editingMovie) return;
     setIsSaving(true);
     try {
-      const response = await axios.put(`/api/movies/${editingMovie.id}`, editingMovie);
-      setMovies(movies.map(m => m.id === editingMovie.id ? response.data : m));
+      const { id, ...movieData } = editingMovie;
+      await updateDoc(doc(db, "movies", id), movieData);
       setEditingMovie(null);
     } catch (error) {
       console.error("Error updating movie:", error);
