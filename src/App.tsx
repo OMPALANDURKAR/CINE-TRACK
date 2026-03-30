@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { auth, db } from "./lib/firebase";
-import { signInAnonymously, onAuthStateChanged, signOut } from "firebase/auth";
+import { signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "firebase/auth";
 import { collection, query, onSnapshot, doc, getDoc, setDoc, serverTimestamp, orderBy } from "firebase/firestore";
 import LandingPage from "./pages/LandingPage";
 import Dashboard from "./pages/Dashboard";
@@ -22,14 +22,20 @@ export default function App() {
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        // Check if we have user profile in Firestore
-        const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
-        if (userDoc.exists()) {
-          setUser(userDoc.data() as User);
-        } else {
-          // If auth exists but no doc, maybe it was a partial login or anonymous without profile
-          // We'll let the LandingPage handle profile creation
-          setUser(null);
+        try {
+          console.log("Auth state changed, fetching user doc for:", firebaseUser.uid);
+          const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
+          
+          if (userDoc.exists()) {
+            setUser(userDoc.data() as User);
+          } else {
+            // If user doc doesn't exist, they might be in the middle of signing up via handleEnter.
+            // We don't set user to null here, we let handleEnter finish creating the profile.
+            console.log("User doc does not exist yet.");
+          }
+        } catch (err: any) {
+          console.error("Error in getDoc during onAuthStateChanged:", err);
+          setLoginError(`Database Error: ${err.message || "Failed to connect"}`);
         }
       } else {
         setUser(null);
@@ -60,35 +66,55 @@ export default function App() {
     }
   }, [user]);
 
-  const handleEnter = async (firstName: string, lastName: string) => {
+  const handleEnter = async () => {
     setLoginLoading(true);
     setLoginError(null);
     try {
-      // 1. Sign in anonymously to get a UID
-      const userCredential = await signInAnonymously(auth);
-      const uid = userCredential.user.uid;
+      // 1. Sign in with Google
+      const provider = new GoogleAuthProvider();
+      const userCredential = await signInWithPopup(auth, provider);
+      const firebaseUser = userCredential.user;
+      const uid = firebaseUser.uid;
 
-      // 2. Check if this user (by name) already exists in our "users" collection
-      // For simplicity in this demo, we'll just create/update the profile for this UID
-      const isAdmin = firstName === "Vedant" && lastName === "Palandurkar@1980";
+      // 2. Check if this user already exists in our "users" collection
+      const userDoc = await getDoc(doc(db, "users", uid));
       
-      const userData: User = {
-        id: uid,
-        firstName,
-        lastName,
-        isAdmin,
-        enteredAt: new Date().toISOString(),
-      };
+      if (userDoc.exists()) {
+        setUser(userDoc.data() as User);
+      } else {
+        // Create new user profile
+        const nameParts = (firebaseUser.displayName || "").split(" ");
+        const firstName = nameParts[0] || "User";
+        const lastName = nameParts.slice(1).join(" ") || "";
+        
+        const isAdmin = firebaseUser.email === "vedantpalandurkar14@gmail.com";
+        
+        const userData: User = {
+          id: uid,
+          firstName,
+          lastName,
+          isAdmin,
+          enteredAt: new Date().toISOString(),
+        };
 
-      await setDoc(doc(db, "users", uid), {
-        ...userData,
-        enteredAt: serverTimestamp(),
-      });
-
-      setUser(userData);
+        try {
+          await setDoc(doc(db, "users", uid), {
+            ...userData,
+            enteredAt: serverTimestamp(),
+          });
+          setUser(userData);
+        } catch (setDocErr) {
+          console.error("Error in setDoc:", setDocErr);
+          throw setDocErr;
+        }
+      }
     } catch (error: any) {
       console.error("Error entering platform:", error);
-      setLoginError("Login failed. Please check your connection.");
+      if (error.code === 'auth/popup-closed-by-user') {
+        setLoginError("Sign-in popup was closed. Please try again.");
+      } else {
+        setLoginError(`Login Error: ${error.message || "Failed to connect."}`);
+      }
     } finally {
       setLoginLoading(false);
     }

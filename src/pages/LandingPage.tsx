@@ -1,21 +1,18 @@
-import React, { useState } from "react";
+import React from "react";
 import { Film, ArrowRight, Sparkles, Loader2, AlertCircle } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
 interface LandingPageProps {
-  onEnter: (firstName: string, lastName: string) => void;
+  onEnter: () => void;
   loading?: boolean;
   error?: string | null;
 }
 
 export default function LandingPage({ onEnter, loading, error }: LandingPageProps) {
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (firstName && lastName && !loading) {
-      onEnter(firstName, lastName);
+    if (!loading) {
+      onEnter();
     }
   };
 
@@ -81,33 +78,6 @@ export default function LandingPage({ onEnter, loading, error }: LandingPageProp
             )}
           </AnimatePresence>
 
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-widest text-white/40 ml-1">First Name</label>
-              <input
-                type="text"
-                required
-                disabled={loading}
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                placeholder="Enter your first name"
-                className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-white placeholder:text-white/20 focus:outline-none focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/10 transition-all disabled:opacity-50"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-widest text-white/40 ml-1">Surname</label>
-              <input
-                type="text"
-                required
-                disabled={loading}
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                placeholder="Enter your surname"
-                className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-white placeholder:text-white/20 focus:outline-none focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/10 transition-all disabled:opacity-50"
-              />
-            </div>
-          </div>
-
           <button
             type="submit"
             disabled={loading}
@@ -117,7 +87,7 @@ export default function LandingPage({ onEnter, loading, error }: LandingPageProp
               <Loader2 className="w-6 h-6 animate-spin" />
             ) : (
               <>
-                Login
+                Sign in with Google
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </>
             )}
@@ -126,13 +96,6 @@ export default function LandingPage({ onEnter, loading, error }: LandingPageProp
           <div className="flex items-center justify-center gap-2 text-white/20 text-xs font-medium pt-2">
             <Sparkles className="w-3 h-3" />
             <span>Premium movie tracking experience</span>
-          </div>
-
-          {/* DEBUG INFO - DELETE LATER */}
-          <div className="mt-8 pt-6 border-t border-white/5 text-center">
-            <p className="text-[10px] font-mono text-white/10 uppercase tracking-widest">
-              Debug: {import.meta.env.MODE} | API: {import.meta.env.VITE_API_URL || "AUTO"}
-            </p>
           </div>
         </motion.form>
       </motion.div>

@@ -1,45 +1,20 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // ===============================================================
-    // Assumed Data Model
-    // ===============================================================
-    //
-    // Collection: movies
-    // Document ID: auto-generated
-    // Fields:
-    //   - id: string (required) - Unique ID of the movie.
-    //   - title: string (required) - Title of the movie.
-    //   - genre: string (required) - Genre of the movie.
-    //   - rating: number (required) - Rating out of 10.
-    //   - status: string (required, enum: ["Watched", "To Watch", "Watching"]) - Current status.
-    //   - addedBy: string (required) - User ID of the person who added the movie.
-    //   - createdAt: timestamp (required) - When the movie was added.
-    //
-    // Collection: users
-    // Document ID: userId
-    // Fields:
-    //   - id: string (required) - Unique user ID.
-    //   - firstName: string (required) - First name.
-    //   - lastName: string (required) - Last name.
-    //   - isAdmin: boolean (required) - Whether the user is an admin.
-    //   - enteredAt: timestamp (required) - When the user first logged in.
-    //
-    // ===============================================================
-
-    // Helper Functions
+    
     function isAuthenticated() {
       return request.auth != null;
     }
 
     function isOwner(userId) {
-      return isAuthenticated() && request.auth.uid == userId;
+       return isAuthenticated() && request.auth.uid == userId;
     }
 
     function isAdmin() {
       return isAuthenticated() && 
-        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true ||
-         request.auth.token.email == "vedantpalandurkar14@gmail.com");
+        ((exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true) ||
+         ("email" in request.auth.token && request.auth.token.email == "vedantpalandurkar14@gmail.com"));
     }
 
     function isValidMovie(data) {
@@ -47,33 +22,30 @@ service cloud.firestore {
              data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
              data.genre is string && data.genre.size() > 0 && data.genre.size() < 50 &&
              data.rating is number && data.rating >= 0 && data.rating <= 10 &&
-             data.status in ["Watched", "To Watch", "Watching"] &&
+             data.status in ["Watched", "To Watch", "Watching", "Wishlist"] &&
              data.addedBy is string &&
              data.createdAt is timestamp;
     }
 
     function isValidUser(data) {
-      return data.keys().hasAll(['firstName', 'lastName', 'isAdmin', 'enteredAt']) &&
+      return data.keys().hasAll(['firstName', 'lastName', 'isAdmin']) &&
              data.firstName is string && data.firstName.size() > 0 && data.firstName.size() < 50 &&
-             data.lastName is string && data.lastName.size() > 0 && data.lastName.size() < 50 &&
-             data.isAdmin is bool &&
-             data.enteredAt is timestamp;
+             data.lastName is string && data.lastName.size() >= 0 && data.lastName.size() < 50 &&
+             data.isAdmin is bool;
     }
 
     // Movies Collection
     match /movies/{movieId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && isValidMovie(request.resource.data) && request.resource.data.addedBy == request.auth.uid;
-      allow update: if isAuthenticated() && isValidMovie(request.resource.data) && (request.resource.data.addedBy == request.auth.uid || isAdmin());
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.resource.data.addedBy == request.auth.uid;
+      allow update: if request.auth != null && (request.resource.data.addedBy == request.auth.uid || isAdmin());
       allow delete: if isAdmin();
     }
 
     // Users Collection
     match /users/{userId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && isOwner(userId) && isValidUser(request.resource.data);
-      allow update: if isAdmin();
-      allow delete: if isAdmin();
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && (request.auth.uid == userId || isAdmin());
     }
   }
 }
