@@ -19,7 +19,7 @@ export default function SearchFilter({
   status,
   setStatus,
 }: SearchFilterProps) {
-  const genres = ["All", "Action", "Comedy", "Drama", "Horror", "Sci-Fi", "Thriller", "Animation"];
+  const genres = ["All", "Action", "Comedy", "Drama", "Horror", "Sci-Fi", "Thriller", "Animation", "Romance"];
   const statuses = ["All", "Watched", "Watching", "Wishlist"];
 
   return (
