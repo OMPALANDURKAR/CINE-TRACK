@@ -68,9 +68,17 @@ export default function MovieCard({ movie, user, onEdit, onDelete, onUpdate, isA
             (e.target as HTMLImageElement).src = "https://picsum.photos/seed/movie/400/600";
           }}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-60 group-hover:opacity-80 transition-opacity duration-500" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-100 transition-opacity duration-500" />
         
-        <div className="absolute top-4 right-4">
+        {movie.adminComment && (
+          <div className="absolute top-4 left-4 max-w-[60%] z-10">
+            <div className="px-3 py-1.5 rounded-xl bg-indigo-600/90 backdrop-blur-md border border-indigo-400/30 text-[10px] font-bold text-white shadow-lg shadow-indigo-900/50 leading-tight">
+              "{movie.adminComment}"
+            </div>
+          </div>
+        )}
+
+        <div className="absolute top-4 right-4 z-10">
           <div className={cn(
             "flex items-center gap-1.5 px-3 py-1.5 rounded-full border backdrop-blur-md text-[10px] font-bold uppercase tracking-wider",
             statusColors[movie.status]
@@ -80,9 +88,9 @@ export default function MovieCard({ movie, user, onEdit, onDelete, onUpdate, isA
           </div>
         </div>
 
-        <div className="absolute bottom-4 left-4 right-4">
-          <div className="flex items-center justify-between mb-1">
-            <div className="flex items-center gap-1">
+        <div className="absolute bottom-0 left-0 right-0 p-5 pt-12 bg-gradient-to-t from-black/90 via-black/60 to-transparent z-10">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-1 drop-shadow-md">
               {[...Array(5)].map((_, i) => (
                 <button
                   key={i}
@@ -98,28 +106,28 @@ export default function MovieCard({ movie, user, onEdit, onDelete, onUpdate, isA
                 >
                   <Star
                     className={cn(
-                      "w-3.5 h-3.5 transition-colors",
-                      i < movie.rating ? "text-amber-400 fill-amber-400" : "text-white/20 hover:text-white/40"
+                      "w-4 h-4 transition-colors drop-shadow-sm",
+                      i < movie.rating ? "text-amber-400 fill-amber-400" : "text-white/40 hover:text-white/60"
                     )}
                   />
                 </button>
               ))}
             </div>
             {movie.platform && (
-              <div className="flex items-center gap-1 text-[10px] font-bold text-white/40 bg-white/5 px-2 py-0.5 rounded border border-white/5">
-                <Monitor className="w-2.5 h-2.5" />
+              <div className="flex items-center gap-1 text-[10px] font-bold text-white bg-black/40 backdrop-blur-md px-2.5 py-1 rounded-md border border-white/10 shadow-sm">
+                <Monitor className="w-3 h-3" />
                 {movie.platform}
               </div>
             )}
           </div>
-          <h3 className="text-lg font-bold text-white leading-tight mb-1 group-hover:text-indigo-400 transition-colors">
+          <h3 className="text-xl font-black text-white leading-tight mb-1.5 drop-shadow-lg group-hover:text-indigo-300 transition-colors">
             {movie.title}
           </h3>
-          <div className="flex items-center justify-between">
-            <p className="text-xs text-white/50 font-medium uppercase tracking-widest">{movie.genre}</p>
+          <div className="flex items-center justify-between drop-shadow-md">
+            <p className="text-xs text-indigo-200 font-bold uppercase tracking-widest">{movie.genre}</p>
             {movie.addedBy && (
-              <p className="text-[9px] text-white/20 font-medium truncate max-w-[100px]">
-                By {movie.addedBy}
+              <p className="text-[10px] text-white/60 font-medium truncate max-w-[100px]">
+                By {movie.authorName || movie.addedBy}
               </p>
             )}
           </div>

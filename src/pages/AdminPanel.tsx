@@ -211,7 +211,7 @@ export default function AdminPanel({ user, movies, setMovies, loading }: AdminPa
                         onChange={(e) => setEditingMovie({ ...editingMovie, genre: e.target.value })}
                         className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-white appearance-none focus:outline-none focus:border-indigo-500/50 transition-all"
                       >
-                        {["Action", "Comedy", "Drama", "Horror", "Sci-Fi", "Thriller", "Animation", "Romance"].map((g) => (
+                        {["Action", "Comedy", "Drama", "Horror", "Sci-Fi", "Thriller", "Animation", "Romance", "Feel Good", "Fantasy"].map((g) => (
                           <option key={g} value={g} className="bg-neutral-900">{g}</option>
                         ))}
                       </select>
@@ -262,6 +262,16 @@ export default function AdminPanel({ user, movies, setMovies, loading }: AdminPa
                         </button>
                       ))}
                     </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-widest text-white/40 ml-1">Admin Comment</label>
+                    <textarea
+                      value={editingMovie.adminComment || ""}
+                      onChange={(e) => setEditingMovie({ ...editingMovie, adminComment: e.target.value })}
+                      placeholder="Add a crisp comment..."
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-white focus:outline-none focus:border-indigo-500/50 transition-all resize-none h-24"
+                    />
                   </div>
 
                   <div className="space-y-2">

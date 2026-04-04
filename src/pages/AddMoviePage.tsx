@@ -192,7 +192,7 @@ export default function AddMoviePage({ user, onMovieAdded }: AddMoviePageProps) 
                     onChange={(e) => setManualMovie({ ...manualMovie, genre: e.target.value })}
                     className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-white appearance-none focus:outline-none focus:border-indigo-500/50 transition-all"
                   >
-                    {["Action", "Comedy", "Drama", "Horror", "Sci-Fi", "Thriller", "Animation", "Romance"].map((g) => (
+                    {["Action", "Comedy", "Drama", "Horror", "Sci-Fi", "Thriller", "Animation", "Romance", "Feel Good", "Fantasy"].map((g) => (
                       <option key={g} value={g} className="bg-neutral-900">{g}</option>
                     ))}
                   </select>

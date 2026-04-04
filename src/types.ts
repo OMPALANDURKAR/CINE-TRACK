@@ -12,6 +12,7 @@ export interface Movie {
   releaseDate?: string;
   platform?: string;
   addedBy?: string;
+  adminComment?: string;
 }
 
 export interface User {
