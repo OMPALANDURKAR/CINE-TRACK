@@ -37,20 +37,6 @@ export default function MovieCard({ movie, user, onEdit, onDelete, onUpdate, isA
     }
   };
 
-  const statusIcons = {
-    Watched: CheckCircle,
-    Watching: Clock,
-    Wishlist: Bookmark,
-  };
-
-  const statusColors = {
-    Watched: "text-emerald-400 bg-emerald-400/10 border-emerald-400/20",
-    Watching: "text-amber-400 bg-amber-400/10 border-amber-400/20",
-    Wishlist: "text-indigo-400 bg-indigo-400/10 border-indigo-400/20",
-  };
-
-  const StatusIcon = statusIcons[movie.status];
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -71,22 +57,18 @@ export default function MovieCard({ movie, user, onEdit, onDelete, onUpdate, isA
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-100 transition-opacity duration-500" />
         
         {movie.adminComment && (
-          <div className="absolute top-4 left-4 max-w-[60%] z-10">
-            <div className="px-3 py-1.5 rounded-xl bg-indigo-600/90 backdrop-blur-md border border-indigo-400/30 text-[10px] font-bold text-white shadow-lg shadow-indigo-900/50 leading-tight">
-              "{movie.adminComment}"
+          <div className="absolute top-4 left-4 max-w-[65%] z-10">
+            <div className="flex flex-col gap-1 p-2.5 rounded-xl bg-black/60 backdrop-blur-md border border-white/10 shadow-2xl">
+              <div className="flex items-center gap-1.5">
+                <div className="w-1 h-1 rounded-full bg-indigo-500" />
+                <span className="text-[8px] font-bold uppercase tracking-widest text-indigo-300">Editor's Note</span>
+              </div>
+              <p className="text-[10px] font-medium text-white/90 leading-snug">
+                {movie.adminComment}
+              </p>
             </div>
           </div>
         )}
-
-        <div className="absolute top-4 right-4 z-10">
-          <div className={cn(
-            "flex items-center gap-1.5 px-3 py-1.5 rounded-full border backdrop-blur-md text-[10px] font-bold uppercase tracking-wider",
-            statusColors[movie.status]
-          )}>
-            <StatusIcon className="w-3 h-3" />
-            {movie.status}
-          </div>
-        </div>
 
         <div className="absolute bottom-0 left-0 right-0 p-5 pt-12 bg-gradient-to-t from-black/90 via-black/60 to-transparent z-10">
           <div className="flex items-center justify-between mb-2">

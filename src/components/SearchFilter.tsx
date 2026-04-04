@@ -7,8 +7,6 @@ interface SearchFilterProps {
   setSearch: (val: string) => void;
   genre: string;
   setGenre: (val: string) => void;
-  status: MovieStatus | "All";
-  setStatus: (val: MovieStatus | "All") => void;
 }
 
 export default function SearchFilter({
@@ -16,11 +14,8 @@ export default function SearchFilter({
   setSearch,
   genre,
   setGenre,
-  status,
-  setStatus,
 }: SearchFilterProps) {
   const genres = ["All", "Action", "Comedy", "Drama", "Horror", "Sci-Fi", "Thriller", "Animation", "Romance", "Feel Good", "Fantasy"];
-  const statuses = ["All", "Watched", "Watching", "Wishlist"];
 
   return (
     <div className="flex flex-col md:flex-row gap-4 mb-12">
@@ -50,18 +45,6 @@ export default function SearchFilter({
             ))}
           </select>
         </div>
-
-        <select
-          value={status}
-          onChange={(e) => setStatus(e.target.value as any)}
-          className="bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-white appearance-none focus:outline-none focus:border-indigo-500/50 transition-all cursor-pointer min-w-[140px]"
-        >
-          {statuses.map((s) => (
-            <option key={s} value={s} className="bg-neutral-900">
-              {s}
-            </option>
-          ))}
-        </select>
       </div>
     </div>
   );

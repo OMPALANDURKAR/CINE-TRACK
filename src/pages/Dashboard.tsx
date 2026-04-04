@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Movie, MovieStatus, User } from "../types";
+import { Movie, User } from "../types";
 import MovieCard from "../components/MovieCard";
 import SearchFilter from "../components/SearchFilter";
 import { motion, AnimatePresence } from "motion/react";
@@ -15,7 +15,6 @@ interface DashboardProps {
 export default function Dashboard({ user, movies, setMovies, loading }: DashboardProps) {
   const [search, setSearch] = useState("");
   const [genre, setGenre] = useState("All");
-  const [status, setStatus] = useState<MovieStatus | "All">("All");
 
   const handleUpdateMovie = (updatedMovie: Movie) => {
     setMovies((prev) => prev.map((m) => (m.id === updatedMovie.id ? updatedMovie : m)));
@@ -24,8 +23,7 @@ export default function Dashboard({ user, movies, setMovies, loading }: Dashboar
   const filteredMovies = movies.filter((movie) => {
     const matchesSearch = movie.title.toLowerCase().includes(search.toLowerCase());
     const matchesGenre = genre === "All" || movie.genre === genre;
-    const matchesStatus = status === "All" || movie.status === status;
-    return matchesSearch && matchesGenre && matchesStatus;
+    return matchesSearch && matchesGenre;
   });
 
   if (loading) {
@@ -61,8 +59,6 @@ export default function Dashboard({ user, movies, setMovies, loading }: Dashboar
         setSearch={setSearch}
         genre={genre}
         setGenre={setGenre}
-        status={status}
-        setStatus={setStatus}
       />
 
       {filteredMovies.length > 0 ? (

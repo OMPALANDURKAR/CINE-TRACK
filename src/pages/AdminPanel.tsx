@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { db } from "../lib/firebase";
 import { collection, doc, deleteDoc, updateDoc, getDocs, query, orderBy } from "firebase/firestore";
-import { User, Movie, MovieStatus } from "../types";
+import { User, Movie } from "../types";
 import { Users, Film, Trash2, Edit3, Loader2, AlertCircle, X, Check, Star, Link as LinkIcon, Monitor } from "lucide-react";
 import MovieCard from "../components/MovieCard";
 import { motion, AnimatePresence } from "motion/react";
@@ -203,31 +203,17 @@ export default function AdminPanel({ user, movies, setMovies, loading }: AdminPa
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold uppercase tracking-widest text-white/40 ml-1">Genre</label>
-                      <select
-                        value={editingMovie.genre}
-                        onChange={(e) => setEditingMovie({ ...editingMovie, genre: e.target.value })}
-                        className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-white appearance-none focus:outline-none focus:border-indigo-500/50 transition-all"
-                      >
-                        {["Action", "Comedy", "Drama", "Horror", "Sci-Fi", "Thriller", "Animation", "Romance", "Feel Good", "Fantasy"].map((g) => (
-                          <option key={g} value={g} className="bg-neutral-900">{g}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold uppercase tracking-widest text-white/40 ml-1">Status</label>
-                      <select
-                        value={editingMovie.status}
-                        onChange={(e) => setEditingMovie({ ...editingMovie, status: e.target.value as MovieStatus })}
-                        className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-white appearance-none focus:outline-none focus:border-indigo-500/50 transition-all"
-                      >
-                        {["Watched", "Watching", "Wishlist"].map((s) => (
-                          <option key={s} value={s} className="bg-neutral-900">{s}</option>
-                        ))}
-                      </select>
-                    </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-widest text-white/40 ml-1">Genre</label>
+                    <select
+                      value={editingMovie.genre}
+                      onChange={(e) => setEditingMovie({ ...editingMovie, genre: e.target.value })}
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-white appearance-none focus:outline-none focus:border-indigo-500/50 transition-all"
+                    >
+                      {["Action", "Comedy", "Drama", "Horror", "Sci-Fi", "Thriller", "Animation", "Romance", "Feel Good", "Fantasy"].map((g) => (
+                        <option key={g} value={g} className="bg-neutral-900">{g}</option>
+                      ))}
+                    </select>
                   </div>
 
                   <div className="space-y-2">

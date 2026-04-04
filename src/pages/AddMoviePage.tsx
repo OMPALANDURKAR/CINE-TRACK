@@ -3,7 +3,7 @@ import { db } from "../lib/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { Search, Plus, Star, Link as LinkIcon, Check, Loader2, Monitor } from "lucide-react";
 import { searchMovies } from "../lib/tmdb";
-import { Movie, MovieStatus, User } from "../types";
+import { Movie, User } from "../types";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "../lib/utils";
 
@@ -23,7 +23,6 @@ export default function AddMoviePage({ user, onMovieAdded }: AddMoviePageProps) 
     title: "",
     genre: "Action",
     rating: 3,
-    status: "Watched",
     posterUrl: "",
     platform: "",
   });
@@ -60,7 +59,6 @@ export default function AddMoviePage({ user, onMovieAdded }: AddMoviePageProps) 
           title: "",
           genre: "Action",
           rating: 3,
-          status: "Watched",
           posterUrl: "",
           platform: "",
         });
@@ -131,7 +129,7 @@ export default function AddMoviePage({ user, onMovieAdded }: AddMoviePageProps) 
                     <h4 className="text-white font-bold truncate mb-1">{result.title}</h4>
                     <p className="text-xs text-white/40 mb-4">{result.releaseDate?.split("-")[0] || "N/A"}</p>
                     <button
-                      onClick={() => handleAddMovie({ ...result, rating: 5, status: "Watched" })}
+                      onClick={() => handleAddMovie({ ...result, rating: 5 })}
                       disabled={loading}
                       className="w-fit flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-indigo-600 text-white text-xs font-bold rounded-lg transition-all"
                     >
@@ -184,7 +182,6 @@ export default function AddMoviePage({ user, onMovieAdded }: AddMoviePageProps) 
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-xs font-bold uppercase tracking-widest text-white/40 ml-1">Genre</label>
                   <select
@@ -197,19 +194,6 @@ export default function AddMoviePage({ user, onMovieAdded }: AddMoviePageProps) 
                     ))}
                   </select>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase tracking-widest text-white/40 ml-1">Status</label>
-                  <select
-                    value={manualMovie.status}
-                    onChange={(e) => setManualMovie({ ...manualMovie, status: e.target.value as MovieStatus })}
-                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-white appearance-none focus:outline-none focus:border-indigo-500/50 transition-all"
-                  >
-                    {["Watched", "Watching", "Wishlist"].map((s) => (
-                      <option key={s} value={s} className="bg-neutral-900">{s}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
 
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase tracking-widest text-white/40 ml-1">Platform</label>
